@@ -8,9 +8,15 @@ server.set("port", process.env.PORT || 3450)
 
 server.use(bodyParser.json())
 
+var whitelist = ['https://strivebooks.herokuapp.com', 'http://localhost:3000']
 var corsOptions = {
-    origin: "https://strivebooks.herokuapp.com",
-    optionsSuccessStatus: 200
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  }
 }
 
 server.use("/books", cors(corsOptions), bookRouter)
