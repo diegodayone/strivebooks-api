@@ -8,7 +8,12 @@ server.set("port", process.env.PORT || 3450)
 
 server.use(bodyParser.json())
 
-server.use("/books", cors(), bookRouter)
+var corsOptions = {
+    origin: "strivebooks.herokuapp.com",
+    optionsSuccessStatus: 200
+}
+
+server.use("/books", cors(corsOptions), bookRouter)
 
 server.use("/test", (req, res) => {
     res.send("working")
