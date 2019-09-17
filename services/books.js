@@ -8,8 +8,18 @@ getBooks = async () => {
     return JSON.parse(items)
 }
 
+getComments = async () => {
+    var buffer = await fs.readFile("comments.json");
+    var items = buffer.toString()
+    return JSON.parse(items)
+}
+
 saveBooks = async (books) => {
     await fs.writeFile("books.json", JSON.stringify(books))
+}
+
+saveComments = async (books) => {
+    await fs.writeFile("comments.json", JSON.stringify(books))
 }
 
 const router = express.Router();
@@ -70,6 +80,31 @@ router.delete("/:id", async (req, res) => {
     var booksWithoutSpecifiedID = books.filter(x => x.asin != req.params.id)
     await saveBooks(booksWithoutSpecifiedID);
     res.send(booksWithoutSpecifiedID)
+})
+
+router.post("/:bookId/comments", async(req, res)=>{
+    //add the comment to the given array
+    req.body.id = shortid.generate()
+    req.body.Date = new Date()
+    req.body.BookID = req.params.bookId;
+
+    var comments = await getComments()
+    comments.push(req.body)
+    await saveComments(comments)
+
+    res.send(req.body);
+})
+
+router.get("/:bookId/comments", async (req, res)=>{
+    var comments = await getComments()
+
+    res.send(comments.filter(x => x.BookID == req.params.bookId))
+})
+
+router.delete("/:commentId/comments", async(req, res) =>{
+    var comments = await getComments();
+    await saveComments(comments.filter(x => x.id != req.params.commentId))
+    res.send("ok")
 })
 
 module.exports = router
