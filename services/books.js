@@ -9,7 +9,7 @@ getBooks = async () => {
 }
 
 saveBooks = async (books) => {
-    await fs.writeFile("books.json", books)
+    await fs.writeFile("books.json", JSON.stringify(books))
 }
 
 const router = express.Router();
