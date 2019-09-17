@@ -47,7 +47,7 @@ router.post("/", async (req, res) => {
 
     books.push(req.body)
     await saveBooks(books);
-    res.send(books);
+    res.send(req.body);
 })
 
 router.put("/:id", async (req, res) => {
@@ -59,7 +59,7 @@ router.put("/:id", async (req, res) => {
     Object.assign(book, req.body)
 
     await saveBooks(books);
-    res.send(books)
+    res.send(book);
 })
 
 router.delete("/:id", async (req, res) => {
