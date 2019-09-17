@@ -9,7 +9,7 @@ server.set("port", process.env.PORT || 3450)
 server.use(bodyParser.json())
 
 var corsOptions = {
-    origin: "strivebooks.herokuapp.com",
+    origin: "https://strivebooks.herokuapp.com",
     optionsSuccessStatus: 200
 }
 
