@@ -20,7 +20,15 @@ router.get("/", async (req, res) => {
     console.log(req.query)
     for (let entry in req.query) {
         var queryValue = req.query[entry].toLowerCase ? req.query[entry].toLowerCase() : req.query[entry];
-        books = books.filter(x => x[entry].toLowerCase ? x[entry].toLowerCase().indexOf(queryValue) >= 0 : x[entry] == queryValue)
+        books = books.filter(x => x[entry].toLowerCase ?
+            x[entry].toLowerCase().indexOf(queryValue) >= 0 :
+            x[entry] == queryValue)
+
+        // if (req.query.toLowerCase)
+        //     books = books.filter(x => x[entry].toLowerCase().indexOf(req.query[entry].toLowerCase()) >= 0);
+        // else
+        //     books = books.filter(x => x[entry] == req.query[entry]
+
         console.log(entry + " => " + queryValue + " array size: " + books.length)
     }
 
