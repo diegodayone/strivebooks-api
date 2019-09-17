@@ -47,6 +47,7 @@ router.post("/", async (req, res) => {
 
     books.push(req.body)
     await saveBooks(books);
+    res.send(books);
 })
 
 router.put("/:id", async (req, res) => {
@@ -58,6 +59,7 @@ router.put("/:id", async (req, res) => {
     Object.assign(book, req.body)
 
     await saveBooks(books);
+    res.send(books)
 })
 
 router.delete("/:id", async (req, res) => {
@@ -67,6 +69,7 @@ router.delete("/:id", async (req, res) => {
     //[1 ,2 , 7]
     var booksWithoutSpecifiedID = books.filter(x => x.asin != req.params.id)
     await saveBooks(booksWithoutSpecifiedID);
+    res.send(booksWithoutSpecifiedID)
 })
 
 module.exports = router
