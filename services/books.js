@@ -151,28 +151,42 @@ router.delete("/:id", async (req, res) => {
 })
 
 router.post("/:bookId/comments", async(req, res)=>{
-    //add the comment to the given array
-    req.body.id = shortid.generate()
-    req.body.Date = new Date()
-    req.body.BookID = req.params.bookId;
+    var insertReview = `INSERT INTO Reviews (Reviewer, Rate, Description, FK_Book)
+    VALUES ('${req.body.Reviewer}', '${req.body.Rate}', '${req.body.Description}', 
+    '${req.body.FK_Book}')`
 
-    var comments = await getComments()
-    comments.push(req.body)
-    await saveComments(comments)
-
-    res.send(req.body);
+    var request = new Request(insertReview, (err) =>{ 
+    if(err) res.send(err)
+    else res.send("Item added")
+    })
+    connection.execSql(request); //Execute Query
 })
 
 router.get("/:bookId/comments", async (req, res)=>{
-    var comments = await getComments()
+    var selectBooks = "SELECT Reviewer, Rate, Reviews.Description, ASIN, Title FROM BOOKS JOIN REVIEWS ON ASIN = FK_Book WHERE FK_BOOK = " + req.params.bookId
+    var request = new Request(selectBooks, (err, rowCount, rows) =>{
+      if(err) res.send(err)
+      else res.send(reviews)
+    })
 
-    res.send(comments.filter(x => x.BookID == req.params.bookId))
+    var reviews = [];
+    request.on('row', (columns) => { //every time we receive back a row from SQLServer
+      var book = {}
+      columns.forEach(column =>{
+        book[column.metadata.colName] = column.value //add property to the book object
+      })
+      reviews.push(book);
+    })
+    connection.execSql(request); //Execute Query
 })
 
-router.delete("/:commentId/comments", async(req, res) =>{
-    var comments = await getComments();
-    await saveComments(comments.filter(x => x.id != req.params.commentId))
-    res.send("ok")
+router.delete("/:bookId/comments/:reviewId", async(req, res) =>{
+    var request = new Request("DELETE FROM Reviews WHERE ReviewId = " + req.params.reviewId,
+    (err, rowCount, rows)=>{
+        if (err) res.send(err)
+        else res.send("Rows deleted: " + rowCount)
+    })
+    connection.execSql(request);
 })
 
 module.exports = router
