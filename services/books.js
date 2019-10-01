@@ -171,11 +171,11 @@ router.get("/:bookId/comments", async (req, res)=>{
 
     var reviews = [];
     request.on('row', (columns) => { //every time we receive back a row from SQLServer
-      var book = {}
+      var review = {}
       columns.forEach(column =>{
-        book[column.metadata.colName] = column.value //add property to the book object
+        review[column.metadata.colName] = column.value //add property to the book object
       })
-      reviews.push(book);
+      reviews.push(review);
     })
     connection.execSql(request); //Execute Query
 })
