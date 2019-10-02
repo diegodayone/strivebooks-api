@@ -1,6 +1,7 @@
 const express = require("express")
 const bodyParser = require("body-parser")
 const bookRouter = require("./services/books")
+const cartRouter = require("./services/cart")
 const cors = require("cors")
 require('dotenv').config()
 var Request = require('tedious').Request
@@ -26,6 +27,7 @@ var corsOptions = {
 }
 
 server.use("/books", cors(), bookRouter)
+server.use("/cart", cors(), cartRouter)
 
 server.use("/test", (req, res) => {
     var selectBooks = "SELECT * FROM BOOKS"

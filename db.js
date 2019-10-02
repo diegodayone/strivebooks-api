@@ -12,7 +12,8 @@ var config = {
         }
     },
     options: {
-        database: 'strivebooksdb'
+        database: 'strivebooksdb',
+        rowCollectionOnRequestCompletion: true
     }
   }
 

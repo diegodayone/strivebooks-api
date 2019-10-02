@@ -5,30 +5,15 @@ const connection = require('../db')
 const Request = require("tedious").Request
 const Types = require("tedious").TYPES
 
-getBooks = async () => {
-    var buffer = await fs.readFile("books.json");
-    var items = buffer.toString()
-    return JSON.parse(items)
-}
-
-getComments = async () => {
-    var buffer = await fs.readFile("comments.json");
-    var items = buffer.toString()
-    return JSON.parse(items)
-}
-
-saveBooks = async (books) => {
-    await fs.writeFile("books.json", JSON.stringify(books))
-}
-
-saveComments = async (books) => {
-    await fs.writeFile("comments.json", JSON.stringify(books))
-}
-
 const router = express.Router();
 
 router.get("/", async (req, res) => {
     var selectBooks = "SELECT * FROM BOOKS"
+    if (req.query.category)
+      selectBooks += " WHERE Genre = '" + req.query.category + "'";
+
+      console.log(selectBooks)
+
     var request = new Request(selectBooks, (err, rowCount, rows) =>{
       if(err) res.send(err)
       else res.send(books)
@@ -38,7 +23,7 @@ router.get("/", async (req, res) => {
     request.on('row', (columns) => { //every time we receive back a row from SQLServer
       var book = {}
       columns.forEach(column =>{
-        book[column.metadata.colName] = column.value //add property to the book object
+        book[column.metadata.colName.toLowerCase()] = column.value //add property to the book object
       })
       books.push(book);
     })
@@ -78,7 +63,7 @@ router.get("/:id", async (req, res) => {
     var book = {};
     request.on('row', (columns) => { //every time we receive back a row from SQLServer
       columns.forEach(column =>{
-        book[column.metadata.colName] = column.value //add property to the book object
+        book[column.metadata.colName.toLowerCase()] = column.value //add property to the book object
       })
     })
     request.addParameter("ASIN", Types.NVarChar, req.params.id)
@@ -150,10 +135,20 @@ router.delete("/:id", async (req, res) => {
     // res.send(booksWithoutSpecifiedID)
 })
 
+router.post("/:id/addToCart/:user", (req, res) => {
+  var addToCart = `INSERT INTO ShoppingCart (Username, FK_BOOK) VALUES ('${req.params.user}', ${req.params.id})`
+  var request = new Request(addToCart, (err) =>{
+    if (err) res.send(err)
+    else res.send("Added")
+  })
+
+  connection.execSql(request);
+})
+
 router.post("/:bookId/comments", async(req, res)=>{
     var insertReview = `INSERT INTO Reviews (Reviewer, Rate, Description, FK_Book)
     VALUES ('${req.body.Reviewer}', '${req.body.Rate}', '${req.body.Description}', 
-    '${req.body.FK_Book}')`
+    '${req.params.bookId}')`
 
     var request = new Request(insertReview, (err) =>{ 
     if(err) res.send(err)
