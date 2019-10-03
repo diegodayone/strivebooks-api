@@ -8,11 +8,18 @@ const Types = require("tedious").TYPES
 const router = express.Router();
 
 router.get("/", async (req, res) => {
-    var selectBooks = "SELECT * FROM BOOKS"
-    if (req.query.category)
+    var selectBooks = "SELECT * FROM BOOKS" //get EVERYTHING FROM BOOKS
+    if (req.query.category) //if we specify a category, filter for the category
       selectBooks += " WHERE Genre = '" + req.query.category + "'";
 
-      console.log(selectBooks)
+    selectBooks += " ORDER BY ASIN" //sort result by ASIN
+    //Skips the first N record where N = req.query.skip or 0 if req.query.skip is undefined
+    selectBooks += ` OFFSET ${req.query.skip ? req.query.skip : 0} ROWS`
+    
+    if (req.query.limit) //Uses FETCH NEXT to limit the number of results from the query
+      selectBooks += " FETCH NEXT " + req.query.limit + " ROWS ONLY"
+    
+    console.log(selectBooks)
 
     var request = new Request(selectBooks, (err, rowCount, rows) =>{
       if(err) res.send(err)
@@ -28,24 +35,6 @@ router.get("/", async (req, res) => {
       books.push(book);
     })
     connection.execSql(request); //Execute Query
-    // var books = await getBooks();
-
-    // console.log(req.query)
-    // for (let entry in req.query) {
-    //     var queryValue = req.query[entry].toLowerCase ? req.query[entry].toLowerCase() : req.query[entry];
-    //     books = books.filter(x => x[entry].toLowerCase ?
-    //         x[entry].toLowerCase().indexOf(queryValue) >= 0 :
-    //         x[entry] == queryValue)
-
-    //     // if (req.query.toLowerCase)
-    //     //     books = books.filter(x => x[entry].toLowerCase().indexOf(req.query[entry].toLowerCase()) >= 0);
-    //     // else
-    //     //     books = books.filter(x => x[entry] == req.query[entry]
-
-    //     console.log(entry + " => " + queryValue + " array size: " + books.length)
-    // }
-
-    // res.send(books)
 })
 
 router.get("/:id", async (req, res) => {
@@ -136,10 +125,13 @@ router.delete("/:id", async (req, res) => {
 })
 
 router.post("/:id/addToCart/:user", (req, res) => {
-  var addToCart = `INSERT INTO ShoppingCart (Username, FK_BOOK) VALUES ('${req.params.user}', ${req.params.id})`
-  var request = new Request(addToCart, (err) =>{
+  var addToCart = `INSERT INTO ShoppingCart (Username, FK_BOOK) 
+                   OUTPUT Inserted.CartID
+                   VALUES ('${req.params.user}', ${req.params.id})`
+
+  var request = new Request(addToCart, (err, rowCount, rows) =>{
     if (err) res.send(err)
-    else res.send("Added")
+    else res.send({ id: rows[0][0].value})
   })
 
   connection.execSql(request);
@@ -147,18 +139,21 @@ router.post("/:id/addToCart/:user", (req, res) => {
 
 router.post("/:bookId/comments", async(req, res)=>{
     var insertReview = `INSERT INTO Reviews (Reviewer, Rate, Description, FK_Book)
-    VALUES ('${req.body.Reviewer}', '${req.body.Rate}', '${req.body.Description}', 
-    '${req.params.bookId}')`
+    OUTPUT Inserted.ReviewID
+    VALUES ('${req.body.Reviewer.replace("'", "''")}', 
+    '${req.body.Rate}', 
+    '${req.body.Description.replace("'", "''")}', 
+    '${req.params.bookId.replace("'", "''")}')`
 
-    var request = new Request(insertReview, (err) =>{ 
+    var request = new Request(insertReview, (err, rowCount, row) =>{ 
     if(err) res.send(err)
-    else res.send("Item added")
+    else res.send({id: row[0][0].value})
     })
     connection.execSql(request); //Execute Query
 })
 
 router.get("/:bookId/comments", async (req, res)=>{
-    var selectBooks = "SELECT Reviewer, Rate, Reviews.Description, ASIN, Title FROM BOOKS JOIN REVIEWS ON ASIN = FK_Book WHERE FK_BOOK = " + req.params.bookId
+    var selectBooks = "SELECT ReviewID, Reviewer, Rate, Reviews.Description, ASIN, Title FROM BOOKS JOIN REVIEWS ON ASIN = FK_Book WHERE FK_BOOK = " + req.params.bookId
     var request = new Request(selectBooks, (err, rowCount, rows) =>{
       if(err) res.send(err)
       else res.send(reviews)

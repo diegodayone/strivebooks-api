@@ -9,17 +9,19 @@ const router = express.Router();
 
 router.get("/:username", (req, res)=>{
   //1) query our cart to get the elements with book info
-  var cartContent = `SELECT ASIN, Title, Image, Author, Price, COUNT(*) AS Quantity, Price * Count(*) as Total
-                    FROM ShoppingCart JOIN Books ON FK_Book = ASIN 
-                    WHERE Username = '${req.params.username}'
-                    GROUP BY ASIN, Title, Image, Author, Price
-                    ORDER BY Total DESC`
+  // var cartContent = `SELECT ASIN, Title, Image, Author, Price, COUNT(*) AS Quantity, Price * Count(*) as Total
+  //                   FROM ShoppingCart JOIN Books ON FK_Book = ASIN 
+  //                   WHERE Username = '${req.params.username}'
+  //                   GROUP BY ASIN, Title, Image, Author, Price
+  //                   ORDER BY Total DESC`
+
+  var cartContent = `SELECT * FROM GetShoppingCart('${req.params.username}')`
  
   var cart = [];
   //2) create a request
   var request = new Request(cartContent, (err, rowCount, rows) =>{
     if (err) res.send(err)
-    else res.send(cart)
+    else res.send({ books: cart, total: cart.map(x => x.Total).reduce((x,y) => x+y,0)})
   })
 
   var cart = []
@@ -41,10 +43,11 @@ router.get("/:username", (req, res)=>{
   connection.execSql(request);
 })
 
+
 router.delete("/:username/delete/:bookId", (req, res)=> {
   var deleteQuery = `DELETE TOP (${req.body.number ? req.body.number : 1})
-                    FROM ShoppingCart 
-                    WHERE Username = '${req.params.username}' AND FK_Book = '${req.params.bookId}'`
+                     FROM ShoppingCart 
+                     WHERE Username = '${req.params.username}' AND FK_Book = '${req.params.bookId}'`
 
   var request = new Request(deleteQuery, (err, rowCount) =>{
     if (err) res.send(err)
@@ -59,6 +62,13 @@ router.delete("/:username/delete/:bookId", (req, res)=> {
   connection.execSql(request);
 })
 
+// router.get("/test", (req, res) =>{
+//   connection.execSql(new Request("SELECT * FROM Test(20)",
+//   (err, rowCount, rows)=> {
+//     if (err) res.send(err)
+//     else res.send(rows)
+//   }))
+// })
 
 
 module.exports = router

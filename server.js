@@ -1,10 +1,12 @@
 const express = require("express")
-const bodyParser = require("body-parser")
+
 const bookRouter = require("./services/books")
 const cartRouter = require("./services/cart")
 const cors = require("cors")
 require('dotenv').config()
 var Request = require('tedious').Request
+
+const bodyParser = require("body-parser")
 
 const connection = require("./db")
 
